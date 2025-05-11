@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"sync"
 	"time"
 )
 
@@ -13,8 +15,30 @@ type SearchResult struct {
 	HotelID int
 }
 
-func main() {
+func do7() {
 	hotelIDs := getHotels()
+
+	conn := make(chan SearchResult)
+	defer close(conn)
+
+	var wg sync.WaitGroup
+
+	go func() {
+		for x := range conn {
+			fmt.Println(x)
+		}
+	}()
+
+	for id := range hotelIDs {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			res := search(id)
+			conn <- res
+		}()
+	}
+
+	wg.Wait()
 
 	// Код здесь. Остальные функции и их сигнатуры менять нельзя. Допускается использовать функции-обертки.
 }

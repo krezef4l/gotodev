@@ -3,18 +3,19 @@ package main
 
 import (
 	"fmt"
+	"context"
 )
 
 // Есть функция generate(), которая генерит числа
 // Функция использует канал отмены. Переделать на контекст.
-func generate(cancel <-chan struct{}, start int) <-chan int {
+func generate(ctx context.Context, start int) <-chan int {
 	out := make(chan int)
 	go func() {
 		defer close(out)
 		for i := start; ; i++ {
 			select {
 			case out <- i:
-			case <-cancel:
+			case <-ctx.Done():
 				return
 			}
 		}
@@ -22,10 +23,13 @@ func generate(cancel <-chan struct{}, start int) <-chan int {
 	return out
 }
 
-func main() {
-	cancelCh := make(chan struct{})
+func do3() {
+	// cancelCh := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	
 
-	generated := generate(cancelCh, 11)
+	generated := generate(ctx, 11)
 	for num := range generated {
 		fmt.Print(num, " ")
 		if num > 14 {

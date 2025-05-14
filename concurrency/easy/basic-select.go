@@ -7,6 +7,9 @@ import (
 )
 
 // Что выведет?
+// waited for 1 sec
+// waited for 1 sec
+// context deadline exceeded
 
 func main() {
 	timeout := 3 * time.Second

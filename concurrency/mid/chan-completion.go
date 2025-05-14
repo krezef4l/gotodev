@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"reflect"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -10,12 +12,18 @@ import (
 // Канал завершения
 // Есть функция, которая произносит текст пословно (с некоторыми задержками):
 
-func say(id int, text string) {
+func say(done chan<- struct{}, id int, text string) {
 	for _, word := range strings.Fields(text) {
 		fmt.Printf("Worker #%d says: %s...\n", id, word)
 		dur := time.Duration(rand.Intn(100)) * time.Millisecond
 		time.Sleep(dur)
 	}
+	done <- struct{}{}
+	fmt.Printf("The Worker [%s] with id [%d] completed the work\n", GetFunctionName((say)), id)
+}
+
+func GetFunctionName(i any) string {
+	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }
 
 // Запускаем несколько одновременных воркеров, по одной на каждую фразу:
@@ -28,8 +36,12 @@ func main() {
 		"channels are hard",
 		"floor is lava",
 	}
+	done := make(chan struct{}, len(phrases))
 	for idx, phrase := range phrases {
-		go say(idx+1, phrase)
+		go say(done, idx+1, phrase)
+	}
+	for range phrases {
+		<-done
 	}
 }
 
@@ -42,3 +54,4 @@ func main() {
 //
 //
 // say(done chan<- struct{}, id int, phrase string).
+

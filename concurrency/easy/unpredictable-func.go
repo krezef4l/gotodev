@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -26,11 +27,27 @@ func unpredictableFunc() int64 {
 // Дополнительно нужно измерить, сколько выполнялась эта функция (просто вывести в лог).
 // Сигнатуру функцию обёртки менять можно.
 
-func predictableFunc() int64 {
-	return unpredictableFunc()
+func predictableFunc() (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	ch := make(chan int64, 1)
+	var res int64
+	go func() {
+		ch <- unpredictableFunc()
+	}()
+	select {
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	case res = <-ch:
+		return res, nil
+	}
 }
 
 func main() {
-	res := predictableFunc()
+	start := time.Now()
+	res, err := predictableFunc()
+	elapsed := time.Since(start)
 	fmt.Println(res)
+	fmt.Println(err)
+	fmt.Println("Время затраченное: ", elapsed)
 }

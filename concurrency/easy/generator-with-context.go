@@ -11,11 +11,11 @@ import (
 func generate(ctx context.Context, start int) <-chan int {
 	out := make(chan int)
 	go func() {
-		defer close(out)
 		for i := start; ; i++ {
 			select {
 			case out <- i:
 			case <-ctx.Done():
+				close(out)
 				return
 			}
 		}
@@ -26,14 +26,12 @@ func generate(ctx context.Context, start int) <-chan int {
 func do3() {
 	// cancelCh := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	
-
 	generated := generate(ctx, 11)
 	for num := range generated {
 		fmt.Print(num, " ")
 		if num > 14 {
-			break
+			cancel()
 		}
 	}
 	fmt.Println()

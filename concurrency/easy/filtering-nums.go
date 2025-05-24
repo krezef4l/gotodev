@@ -13,33 +13,33 @@ import (
 
 func producer(a chan<- int, n int, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for {
+	for range 100 {
   		a <- rand.Intn(n + 1)
   	}
+	close(a)
 }
 
 func reciever(a <-chan int, b chan<- int, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for {
-		n := <-a
+
+	for n := range a {
 		if n % 2 == 0 {
 			b <- n
 		}
-  	}
+	}
+
+	close(b)
 }
 
 func printer(b <-chan int, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for {
-		n := <-b
+	for n := range b {
 		fmt.Println(n)
   	}
 }
 
 func do2() {
  	a, b := make(chan int), make(chan int)
-  	defer close(a)
-  	defer close(b)
   	var wg sync.WaitGroup
   	wg.Add(3)
 	

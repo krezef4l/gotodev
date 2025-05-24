@@ -28,12 +28,12 @@ func merge(channels ...<-chan int) <-chan int {
 	wg.Add(len(channels))
 	
 	for _, ch := range channels {
-		go func() {
+		go func(ch <-chan int) {
 			for x := range ch {
 				res <- x
 			}
 			wg.Done()
-		}()
+		}(ch)
 	}
 	
 	go func() {

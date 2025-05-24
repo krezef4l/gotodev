@@ -28,12 +28,14 @@ func unpredictableFunc() int64 {
 // Сигнатуру функцию обёртки менять можно.
 
 func predictableFunc(ctx context.Context) (int64, error) {
-	res := make(chan int64)
+	res := make(chan int64, 1)
 
 	go func() {
 		start := time.Now()
 		x := unpredictableFunc()
 		fmt.Printf("Took: %d\n", time.Since(start))
+		// можно было бы здесь сделать select, но никто не гарантирует, что пока мы будем отсылать 
+		// контекст не протухнет
 		res <- x
 	}()
 

@@ -23,7 +23,9 @@ func do7() {
 
 	var wg sync.WaitGroup
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		for x := range conn {
 			fmt.Println(x)
 		}
@@ -31,11 +33,11 @@ func do7() {
 
 	for id := range hotelIDs {
 		wg.Add(1)
-		go func() {
+		go func(id int) {
 			defer wg.Done()
 			res := search(id)
 			conn <- res
-		}()
+		}(id)
 	}
 
 	wg.Wait()

@@ -1,2 +1,1 @@
-# Gotodev - Practical Task Library on Golang
-
+# Gotodev - Library of Practical Go Tasks

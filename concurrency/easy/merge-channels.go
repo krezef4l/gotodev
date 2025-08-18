@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,37 @@ func generateInRange(start, stop int) <-chan int {
 
 func merge(channels ...<-chan int) <-chan int {
 	//TODO
+
+	// вейтгрупа для того, чтобы успеть считать все данные из каналов, а после закрыть нащ результирующий
+	wg := &sync.WaitGroup{}
+
+	// создаем и инициализируем наш результирующий канал
+	resCh := make(chan int)
+
+	// итерируемся по слайсу каналов (не уверен, что по слайсу, но поидее так и должно быть)
+	for _, ch := range channels {
+		// инкриментим счетчик
+		wg.Add(1)
+		go func(ch <-chan int) {
+			// читаем из канала
+			for item := range ch {
+				// пишем в наш результирующий канал канал
+				resCh <- item
+			}
+			// декриментим счетчик
+			wg.Done()
+		}(ch)
+	}
+
+	// небольшая махинация для того, чтоб:
+	// 1. не закрыть канал слишком рано, а потом горутиной писать в закрытый канал -> panic(),
+	// 2. вообще закрыть в целом, чтобы не словить deadlock, потому что "for val := range merged" будет ждать, а мы уже не пишем -> дедлок
+	go func() {
+		wg.Wait()
+		close(resCh)
+	}()
+
+	return resCh
 }
 
 func main() {

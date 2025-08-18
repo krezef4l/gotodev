@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -27,7 +28,27 @@ func unpredictableFunc() int64 {
 // Сигнатуру функцию обёртки менять можно.
 
 func predictableFunc() int64 {
-	return unpredictableFunc()
+	start := time.Now()
+	var result int64
+	done := make(chan struct{})
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+
+	go func(int64) {
+		result = unpredictableFunc()
+		close(done)
+	}(result)
+
+	select {
+	case <-done:
+		since := time.Since(start)
+		fmt.Println("Work my func:", since, "and my result:", result)
+		return result
+	case <-ctx.Done():
+		since := time.Since(start)
+		fmt.Println("Work my func:", since)
+		return 0
+	}
 }
 
 func main() {

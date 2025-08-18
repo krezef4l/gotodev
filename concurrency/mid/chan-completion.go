@@ -10,11 +10,13 @@ import (
 // Канал завершения
 // Есть функция, которая произносит текст пословно (с некоторыми задержками):
 
-func say(id int, text string) {
+func say(done chan<- struct{}, id int, text string) {
+	defer close(done)
 	for _, word := range strings.Fields(text) {
 		fmt.Printf("Worker #%d says: %s...\n", id, word)
 		dur := time.Duration(rand.Intn(100)) * time.Millisecond
 		time.Sleep(dur)
+		done <- struct{}{} // можем ничего и не писать и так и так будет работать, ведь в мейне мы ничего из этого канала не читаем, а просто ждем пока он отработает
 	}
 }
 
@@ -28,8 +30,12 @@ func main() {
 		"channels are hard",
 		"floor is lava",
 	}
+	ch := make(chan struct{})
 	for idx, phrase := range phrases {
-		go say(idx+1, phrase)
+		go say(ch, idx+1, phrase)
+	}
+
+	for _ = range ch {
 	}
 }
 

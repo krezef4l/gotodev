@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"sync"
 	"time"
 )
 
@@ -17,6 +19,32 @@ func main() {
 	hotelIDs := getHotels()
 
 	// Код здесь. Остальные функции и их сигнатуры менять нельзя. Допускается использовать функции-обертки.
+
+	// Создаю результирующий в который мы будем писать и из него же читать
+	resultCh := make(chan SearchResult)
+	// Чтоб закрыть канал после завершения работы горутин
+	wg := &sync.WaitGroup{}
+
+	// Читаем канал
+	for id := range hotelIDs {
+		wg.Add(1)
+
+		// Ищем инфу и пишем в канал
+		go func(id int) {
+			resultCh <- search(id)
+			wg.Done()
+		}(id)
+	}
+	// Закрываем канал
+	go func() {
+		wg.Wait()
+		close(resultCh)
+	}()
+
+	// Читаем результирующий канал
+	for i := range resultCh {
+		fmt.Println(i)
+	}
 }
 
 func search(hotelID int) SearchResult {

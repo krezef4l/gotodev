@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"strings"
 	"time"
@@ -10,17 +11,20 @@ import (
 // Канал завершения
 // Есть функция, которая произносит текст пословно (с некоторыми задержками):
 
-func say(id int, text string) {
+func say(done chan<- struct{}, id int, text string) {
+
 	for _, word := range strings.Fields(text) {
 		fmt.Printf("Worker #%d says: %s...\n", id, word)
 		dur := time.Duration(rand.Intn(100)) * time.Millisecond
 		time.Sleep(dur)
 	}
+	done <- struct{}{}
 }
 
 // Запускаем несколько одновременных воркеров, по одной на каждую фразу:
 
 func main() {
+
 	phrases := []string{
 		"go is awesome",
 		"cats are cute",
@@ -28,14 +32,17 @@ func main() {
 		"channels are hard",
 		"floor is lava",
 	}
+	var done = make(chan struct{}, len(phrases))
+
 	for idx, phrase := range phrases {
-		go say(idx+1, phrase)
+		go say(done, idx+1, phrase)
+		log.Println("start worker number ", idx)
+	}
+
+	for range phrases {
+		<-done
 	}
 }
-
-// Программа ничего не печатает — функция main() завершается до того, как отработает хотя бы один воркер:
-// Использовать канал для завершения. Пролистай, если нужна подсказка.
-//
 //
 //
 //

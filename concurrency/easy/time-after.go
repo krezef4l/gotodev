@@ -10,7 +10,15 @@ import (
 // возвращает канал, в котором появится значение
 // через промежуток времени dur
 func after(dur time.Duration) <-chan time.Time {
-	// ..
+	done := make(chan time.Time, 1)
+
+	go func() {
+		defer close(done)
+		time.Sleep(dur)
+		done <- time.Now()
+	}()
+
+	return done
 }
 
 func withTimeout(fn func() int, timeout time.Duration) (int, error) {

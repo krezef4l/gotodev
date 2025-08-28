@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"time"
@@ -26,11 +27,37 @@ func unpredictableFunc() int64 {
 // Дополнительно нужно измерить, сколько выполнялась эта функция (просто вывести в лог).
 // Сигнатуру функцию обёртки менять можно.
 
-func predictableFunc() int64 {
-	return unpredictableFunc()
+func predictableFunc(timeout time.Duration) (int64, error) {
+	var result int64
+	done := make(chan struct{})
+
+	go func() {
+		defer close(done)
+		result = unpredictableFunc()
+	}()
+
+	select {
+	case <-done:
+		return result, nil
+	case <-time.After(timeout):
+		return 0, errors.New("ERROR: timeout")
+	}
+
 }
 
 func main() {
-	res := predictableFunc()
+	timeout := time.Duration(1 * time.Second)
+
+	start := time.Now()
+
+	res, err := predictableFunc(timeout)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	elapsed := float64(time.Since(start)) / 1_000_000
+
+	fmt.Printf("Took %.0f ms\n", elapsed)
 	fmt.Println(res)
 }

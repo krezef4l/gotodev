@@ -16,7 +16,28 @@ type SearchResult struct {
 
 func main() {
 	hotelIDs := getHotels()
+	out := make(chan int)
+	var wg sync.WaitGroup
 
+	for id := range hotelIDs {
+		wg.Add(1)
+		go func(wg *sync.WaitGroup, id int, out chan int) {
+			defer wg.Done()
+			out <- search(id).HotelID
+		}(&wg, id, out)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	for v := range out {
+		fmt.Println("hotelID - ", v)
+	}
+
+	fmt.Println("end of values")
+}
 	// Код здесь. Остальные функции и их сигнатуры менять нельзя. Допускается
 	// использовать функции-обертки.
 }

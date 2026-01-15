@@ -7,9 +7,11 @@ import "fmt"
 // Написать ответ подробно.
 
 func main() {
+	// Здесь слайс не инициализирован, в нем нет ссылки на массив
 	var list []int
-	fmt.Println(list == nil)
+	fmt.Println(list == nil) // true
 
+	// Здесь мы уже присваиваем слайс с пустыми данными, там уже есть ссылка на пустой массив
 	list = []int{}
-	fmt.Println(list == nil)
+	fmt.Println(list == nil) // false
 }

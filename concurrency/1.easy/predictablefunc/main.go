@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -26,11 +27,36 @@ func unpredictableFunc() int64 {
 // Дополнительно нужно измерить, сколько выполнялась эта функция (просто вывести
 // в лог). Сигнатуру функцию обёртки менять можно.
 
-func predictableFunc() int64 {
-	return unpredictableFunc()
+func predictableFunc() (int64, error) {
+
+	resCh := make(chan int64)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	start := time.Now()
+
+	go func() {
+		resCh <- unpredictableFunc()
+	}()
+
+	select {
+	case timeRand := <-resCh:
+		fmt.Println("Time:", time.Since(start))
+		return timeRand, nil
+	case <-ctx.Done():
+		fmt.Println("Time:", time.Since(start))
+		return 0, ctx.Err()
+	}
 }
 
 func main() {
-	res := predictableFunc()
-	fmt.Println(res)
+	res, err := predictableFunc()
+	if err != nil {
+		fmt.Println("Функция не выполнилась..", err)
+	} else {
+		fmt.Println("Функция  выполнилась", res)
+	}
 }
+
+//Выполнил через контекст. Так проще установить таймер
+//и поставил счетчик для вычисления + в конце пишем выполнено или нет.

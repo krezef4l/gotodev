@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,24 @@ func generateInRange(start, stop int) <-chan int {
 
 func merge(channels ...<-chan int) <-chan int {
 	//TODO
+	var wg sync.WaitGroup
+	out := make(chan int)
+
+	for _, ch := range channels {
+		wg.Add(1)
+		go func(c <-chan int) {
+			defer wg.Done()
+			for v := range c {
+				out <- v
+			}
+		}(ch)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }
 
 func main() {

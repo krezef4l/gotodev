@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"context"
+	"errors"
 	"math/rand"
 	"time"
 )
@@ -18,6 +20,28 @@ func unpredictableFunc() int64 {
 	return rnd
 }
 
+
+func unpredictableFuncWithTimeout()(int64,error){
+	start:=time.Now()
+	defer func(){
+		fmt.Println("Execution time:",time.Since(start))
+	}()
+	
+ctx, cancel:=context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	resultCh:=make(chan int64,1)
+	go func (){
+		result:=unpredictableFunc()
+		resultCh<-result
+	}()
+	select{
+case result:=<-resultCh:
+		return result, nil
+		case <-ctx.Done():
+return 0,errors.New("Timeout")
+		}
+	
+}
 // Нужно изменить функцию-обёртку, которая будет работать с заданным таймаутом
 // (например, 1 секунду). Если "длинная" функция отработала за это время -
 // отлично, возвращаем результат. Если нет - возвращаем ошибку. Результат работы
@@ -31,6 +55,10 @@ func predictableFunc() int64 {
 }
 
 func main() {
-	res := predictableFunc()
-	fmt.Println(res)
+	res, err := unpredictableFuncWithTimeout()
+	if err !=nil{
+		fmt.Println("Error:",err)
+		return
+	}
+	fmt.Println("Result",res)
 }

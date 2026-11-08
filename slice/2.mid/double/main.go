@@ -11,7 +11,20 @@ import (
 // - inplace реализация: не перекладываем из слайса в слайс.
 
 func double(numbers []*int) {
-	//TODO
+	//TODO:
+	mmap := make(map[*int]struct{}, len(numbers))
+
+	for _, p := range numbers {
+		if p == nil {
+			continue
+		}
+
+		if _, ok := mmap[p]; ok {
+			continue
+		}
+		mmap[p] = struct{}{}
+		*p *= 2
+	}
 }
 
 func main() {

@@ -11,7 +11,14 @@ import (
 // after возвращает канал, в котором появится значение через промежуток времени
 // dur.
 func after(dur time.Duration) <-chan time.Time {
-	// ..
+	out := make(chan time.Time, 1)
+
+	go func() {
+		time.Sleep(dur)
+		out <- time.Now()
+
+	}()
+	return out
 }
 
 // Тело функции ниже изменять нельзя.

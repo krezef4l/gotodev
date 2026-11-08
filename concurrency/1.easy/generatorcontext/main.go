@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -8,31 +9,35 @@ import (
 // отмены. Переделать на контекст: 'Done!' в 18-ой строке должно быть выведено
 // на экран.
 
-func generate(cancel <-chan struct{}, start int) <-chan int {
+func generate(ctx context.Context, start int) (<-chan int, <-chan struct{}) {
 	out := make(chan int)
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		defer close(out)
 		for i := start; ; i++ {
 			select {
 			case out <- i:
-			case <-cancel:
+			case <-ctx.Done():
 				fmt.Println("Done!")
 				return
 			}
 		}
 	}()
-	return out
+	return out, done
 }
 
 func main() {
-	cancelCh := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
 
-	generated := generate(cancelCh, 11)
+	generated, done := generate(ctx, 11)
 	for num := range generated {
 		fmt.Print(num, " ")
 		if num > 14 {
+			cancel()
 			break
 		}
 	}
+	<-done
 	fmt.Println()
 }

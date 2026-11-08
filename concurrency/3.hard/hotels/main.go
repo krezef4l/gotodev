@@ -29,12 +29,11 @@ func main() {
 			defer wg.Done()
 			results <- search(id)
 		}()
+
 	}
 
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
+	wg.Wait()
+	close(results)
 
 	for i := range results {
 		fmt.Println(i.HotelID)

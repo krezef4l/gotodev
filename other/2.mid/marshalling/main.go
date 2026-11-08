@@ -10,7 +10,7 @@ import (
 
 type Data struct {
 	Age  int    `json:"age"`
-	name string `json:"name"`
+	name string `json:"name"` //написанно c маденькой буквой
 }
 
 func testData() {

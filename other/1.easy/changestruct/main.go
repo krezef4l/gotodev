@@ -9,9 +9,9 @@ type Person struct {
 }
 
 func changeName(person *Person) {
-	person = &Person{
-		Name: "Alice",
-	}
+
+	*person = Person{Name: "Alice"}
+
 }
 
 func main() {

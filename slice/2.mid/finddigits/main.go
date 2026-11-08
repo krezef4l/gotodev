@@ -13,8 +13,15 @@ import (
 var digitRegexp = regexp.MustCompile("[0-9]+")
 
 func findDigits(filename string) []byte {
-	b, _ := os.ReadFile(filename)
-	return digitRegexp.Find(b)
+	b, _ := os.ReadFile(filename) //!!! огромное выделение памяти
+	mm := digitRegexp.Find(b)
+	if mm == nil {
+		return nil
+	}
+	res := make([]byte, len(mm))
+	copy(res, mm)
+
+	return res
 }
 
 func main() {

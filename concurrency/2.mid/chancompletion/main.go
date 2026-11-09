@@ -8,7 +8,10 @@ import (
 )
 
 // say произносит текст пословно с некоторыми задержками.
-func say(id int, text string) {
+func say(done chan<-struct{}, id int, text string) {
+	defer func(){
+		done<-struct{}{}
+	}()
 	for _, word := range strings.Fields(text) {
 		fmt.Printf("Worker #%d says: %s...\n", id, word)
 		dur := time.Duration(rand.Intn(100)) * time.Millisecond
@@ -17,6 +20,7 @@ func say(id int, text string) {
 }
 
 func main() {
+	done := make(chan struct{})
 	phrases := []string{
 		"go is awesome",
 		"cats are cute",
@@ -27,7 +31,12 @@ func main() {
 
 	// Запускаем несколько одновременных воркеров, по одной на каждую фразу.
 	for idx, phrase := range phrases {
-		go say(idx+1, phrase)
+    go say(done, idx+1, phrase)
+}
+		
+	for range phrases {
+    <-done
+
 	}
 }
 

@@ -4,7 +4,29 @@ import (
 	"fmt"
 	"time"
 )
+func merge(channels ...<-chan int) <-chan int {
+    out := make(chan int)
 
+    var wg sync.WaitGroup
+    wg.Add(len(channels))
+
+    for _, ch := range channels {
+        go func(ch <-chan int) {
+            defer wg.Done()
+
+            for num := range ch {
+                out <- num
+            }
+        }(ch)
+    }
+
+    go func() {
+        wg.Wait()
+        close(out)
+    }()
+
+    return out
+}
 // Написать функцию merge(), которая объединяет произвольное число каналов
 // и возвращает смерженный канал. Заранее неизвестно, сколько данных
 // придет в каждом из каналов.
